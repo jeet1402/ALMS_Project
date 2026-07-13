@@ -25,7 +25,9 @@ cd ..
 # 2. Setup Frontend
 echo "Setting up Frontend..."
 cd frontend || exit
+# Ensure react-scripts and core dependencies are installed
 npm install
+npm install react-scripts --save
 npm install axios jwt-decode
 echo "Frontend dependencies installed."
 cd ..
