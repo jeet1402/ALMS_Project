@@ -1,0 +1,96 @@
+To successfully integrate PostgreSQL with your ALMS Django backend, you need a stable database environment that matches the requirements outlined in your dissertation synopsis.
+
+### 1. Required Software
+
+Before installing PostgreSQL, ensure you have the following on your Windows machine:
+
+* **PostgreSQL Server**: The core database management system.
+
+
+* **psycopg2**: The necessary Python adapter for PostgreSQL, allowing Django to communicate with the database. Install it via terminal:
+```bash
+pip install psycopg2-binary
+
+```
+
+
+* **pgAdmin 4**: (Optional but recommended) A GUI tool that comes with the Windows installer to visualize your tables and queries.
+
+
+
+### 2. Installing PostgreSQL (Windows)
+
+1. Download the **PostgreSQL Windows Installer** from the official [postgresql.org](https://www.postgresql.org/download/windows/) website.
+2. Run the installer.
+3. **Key Configuration Steps**:
+* **Password**: Set a strong password for the default `postgres` superuser. **Remember this**, as you will need it for your Django `settings.py`.
+* **Port**: Keep the default port as **5432**.
+* **Locale**: Select "Default locale".
+
+
+
+### 3. Testing the Connection via Command Line
+
+Once installed, you can verify the connection without leaving your terminal (Git Bash or Command Prompt).
+
+1. **Open the PostgreSQL Command Line (psql)**:
+In your terminal, navigate to the `bin` folder of your PostgreSQL installation or simply type:
+```bash
+psql -U postgres
+
+```
+
+
+2. **Authenticate**: Enter the password you created during installation.
+3. **Execute a Test Command**: If the prompt changes to `postgres=#`, you are successfully connected. Run this command to list your databases:
+```sql
+\l
+
+```
+
+
+4. **Create your ALMS Database**:
+```sql
+CREATE DATABASE alms_db;
+
+```
+
+
+Confirm it appears in the list by running `\l` again.
+
+### 4. Connecting Django to PostgreSQL
+
+Update your `backend/alms_core/settings.py` to point Django to your new database:
+
+```python
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'alms_db',
+        'USER': 'postgres',
+        'PASSWORD': 'Alms_DB@123',
+        'HOST': 'localhost',
+        'PORT': '5432',
+    }
+}
+
+```
+
+### Verification Checklist
+
+* **Verify Environment**: Ensure `psql` is in your Windows System PATH so you can access it from any Git Bash session.
+
+
+* **Apply Migrations**: After updating `settings.py`, run these commands to create the database tables required by ALMS:
+```bash
+python manage.py makemigrations
+python manage.py migrate
+
+```
+
+
+* **Test Connectivity**: If `migrate` runs successfully, your Django backend is correctly communicating with your PostgreSQL database.
+
+
+
+Does your `psql -U postgres` command return a successful connection when run in your terminal?

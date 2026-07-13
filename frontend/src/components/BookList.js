@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import API from '../api';
+
+const DEBOUNCE_MS = 400;
 
 const BookList = () => {
   const [books, setBooks] = useState([]);
   const [search, setSearch] = useState('');
+  const debounceRef = useRef(null);
 
-  // Fetch books with optional search query
   const loadBooks = async (query = '') => {
     try {
       const res = await API.get('books/', { params: { search: query } });
@@ -17,28 +19,32 @@ const BookList = () => {
 
   useEffect(() => {
     loadBooks();
+    return () => clearTimeout(debounceRef.current);
   }, []);
+
+  const handleSearchChange = (value) => {
+    setSearch(value);
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => loadBooks(value), DEBOUNCE_MS);
+  };
 
   const handleReserve = async (bookId) => {
     try {
       const response = await API.post('reserve/', { book: bookId });
       alert(response.data.message);
-      loadBooks(); // Refresh list after reservation
+      loadBooks(search);
     } catch (err) {
-      alert(err.response?.data?.error || "Reservation failed.");
+      alert(err.response?.data?.error || "Login required to Reserve!");
     }
   };
 
   return (
     <div>
-      <input 
-        type="text" 
-        placeholder="Search by topic, title, or author..." 
+      <input
+        type="text"
+        placeholder="Search by title or author..."
         value={search}
-        onChange={(e) => {
-          setSearch(e.target.value);
-          loadBooks(e.target.value);
-        }}
+        onChange={(e) => handleSearchChange(e.target.value)}
       />
       <table>
         <thead>
@@ -52,8 +58,8 @@ const BookList = () => {
               <td>{book.author}</td>
               <td>{book.available_copies}</td>
               <td>
-                <button 
-                  disabled={book.available_copies <= 0} 
+                <button
+                  disabled={book.available_copies <= 0}
                   onClick={() => handleReserve(book.id)}
                 >
                   {book.available_copies > 0 ? "Reserve" : "Out of Stock"}

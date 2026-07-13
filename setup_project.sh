@@ -1,11 +1,34 @@
 #!/bin/bash
 
-# Create Directories
-mkdir -p backend/alms_core backend/library_app frontend/public frontend/src
+echo "Starting ALMS_Project environment setup..."
 
-# Create Placeholder Files if they don't exist
-[ -f backend/requirements.txt ] || touch backend/requirements.txt
-[ -f backend/.env ] || touch backend/.env
-[ -f README.md ] || touch README.md
+# 1. Setup Backend
+echo "Setting up Backend..."
+cd backend || exit
+# Ensure virtual environment exists, or create one
+if [ ! -d "venv" ]; then
+    python -m venv venv
+fi
+# Activate venv (this works for Git Bash)
+source venv/Scripts/activate
 
-echo "Project structure verification complete."
+# Install requirements
+pip install -r requirements.txt
+pip install psycopg2-binary django-cors-headers djangorestframework django-environ
+echo "Backend dependencies installed."
+
+# Apply migrations
+python manage.py makemigrations
+python manage.py migrate
+cd ..
+
+# 2. Setup Frontend
+echo "Setting up Frontend..."
+cd frontend || exit
+npm install
+npm install axios jwt-decode
+echo "Frontend dependencies installed."
+cd ..
+
+echo "Setup complete! Backend: cd backend && source venv/Scripts/activate && python manage.py runserver"
+echo "Frontend: cd frontend && npm start"
