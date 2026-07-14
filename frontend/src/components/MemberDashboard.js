@@ -1,86 +1,74 @@
 import React, { useEffect, useState } from 'react';
-import API from '../api'; 
+import API from '../api';
 import FineDashboard from './FineDashboard';
+import DataTable from './DataTable';
 
 const MemberDashboard = () => {
   const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Fetch transactions on load
-  useEffect(() => {
+  const loadTransactions = () => {
+    setLoading(true);
     API.get('transactions/')
-      .then((res) => {
-        setTransactions(res.data);
-      })
-      .catch((err) => console.error("Error fetching transactions", err));
-  }, []);
+      .then((res) => setTransactions(res.data))
+      .catch((err) => console.error("Error fetching transactions", err))
+      .finally(() => setLoading(false));
+  };
 
-  // Handle fine payment
+  useEffect(() => { loadTransactions(); }, []);
+
   const handlePayFines = async () => {
     try {
       await API.post('pay-fines/');
       alert("Fines cleared successfully!");
-      window.location.reload();
+      loadTransactions();
     } catch (err) {
       alert("Failed to pay fines.");
     }
   };
 
-  // Handle return book
   const handleReturn = async (transactionId) => {
     try {
       await API.put(`return/${transactionId}/`);
       alert("Book returned successfully!");
-      window.location.reload();
+      loadTransactions();
     } catch (err) {
       alert("Failed to return book.");
     }
   };
 
-  // Logic: Only calculate fines for books that are NOT yet returned
   const activeFineTransactions = transactions.filter(t => t.fine > 0 && !t.return_date);
   const totalOutstanding = activeFineTransactions.reduce((sum, t) => sum + t.fine, 0);
 
-  return (
-    <div className="dashboard-container">
-      <h2>Your Dashboard</h2>
-      
-      <h3>Current Books & History</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Book Name</th>
-            <th>Author</th>
-            <th>Fine (Rs.)</th>
-            <th>Status/Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {transactions.map(t => (
-            <tr key={t.id}>
-              <td>{t.id}</td>
-              <td>{t.book_title || "N/A"}</td>
-              <td>{t.book_author || "N/A"}</td>
-              <td>Rs. {t.fine}</td>
-              <td>
-                {t.return_date ? (
-                  <span>Returned</span>
-                ) : (
-                  <button onClick={() => handleReturn(t.id)}>Return Book</button>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+  const columns = [
+    { key: 'id', label: 'ID', width: '8%' },
+    { key: 'book_title', label: 'Book Name', width: '26%', render: (row) => row.book_title || "N/A" },
+    { key: 'book_author', label: 'Author', width: '20%', render: (row) => row.book_author || "N/A" },
+    { key: 'fine', label: 'Fine (Rs.)', width: '16%', render: (row) => `Rs. ${row.fine}` },
+    {
+      key: 'action', label: 'Status/Action', width: '30%',
+      render: (row) =>
+        row.return_date ? <span>Returned</span> : (
+          <button onClick={() => handleReturn(row.id)}>Return Book</button>
+        ),
+    },
+  ];
 
-      {/* Fine Management: Only pass active overdue transactions */}
-      <div className="fine-management">
-        <h3>Total Outstanding Balance: Rs. {totalOutstanding}</h3>
-        <FineDashboard 
-          fines={activeFineTransactions} 
-          onPay={handlePayFines} 
-        />
+  return (
+    <div className="window">
+      <h3>Your Dashboard</h3>
+      {loading ? <p>Loading...</p> : (
+        <DataTable columns={columns} data={transactions} pageSize={5} emptyMessage="No transactions yet." />
+      )}
+
+      <div className="fine-row">
+        <div className="fine-box">
+          <h3>Total Outstanding Balance</h3>
+          <p className="outstanding-amount">Rs. {totalOutstanding}</p>
+        </div>
+        <div className="fine-box">
+          <FineDashboard fines={activeFineTransactions} onPay={handlePayFines} />
+        </div>
       </div>
     </div>
   );

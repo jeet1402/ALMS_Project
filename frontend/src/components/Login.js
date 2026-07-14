@@ -19,7 +19,7 @@ const Login = () => {
 
   return (
     <form onSubmit={handleLogin}>
-      <h2>Member Login</h2>
+      <h2>Login</h2>
       <input
         type="text"
         placeholder="Username"

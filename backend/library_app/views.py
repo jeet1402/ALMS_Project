@@ -8,20 +8,22 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .models import Book, Member, Transaction
+from .permissions import IsLibrarianOrReadOnly
 from .serializers import BookSerializer, MemberSerializer, TransactionSerializer
 
 
 class BookViewSet(viewsets.ModelViewSet):
     queryset = Book.objects.all()
     serializer_class = BookSerializer
+    permission_classes = [IsLibrarianOrReadOnly]
     filter_backends = [filters.SearchFilter]
-    # 'topic' removed — Book has no such field; searching used to raise a FieldError.
     search_fields = ['title', 'author']
 
 
 class MemberViewSet(viewsets.ModelViewSet):
     queryset = Member.objects.all()
     serializer_class = MemberSerializer
+    permission_classes = [IsLibrarianOrReadOnly]
 
 
 class TransactionViewSet(viewsets.ModelViewSet):

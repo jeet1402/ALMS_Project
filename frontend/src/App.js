@@ -1,63 +1,56 @@
-import React, { useState } from 'react';
-import { jwtDecode } from 'jwt-decode'; // Import the library
+import React from 'react';
+import { jwtDecode } from 'jwt-decode';
 import Login from './components/Login';
-import BookList from './components/BookList';
+import AdminDashboard from './components/AdminDashboard';
 import MemberDashboard from './components/MemberDashboard';
-import AdminDashboard from './components/AdminDashboard'; // Import this
-import AdminCirculation from './components/AdminCirculation';
+import BookList from './components/BookList';
+import './App.css';
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('access'));
-  const [isStaff, setIsStaff] = useState(false); // You should ideally set this based on token claims
+  const isAuthenticated = !!localStorage.getItem('access');
 
   const handleLogout = () => {
     localStorage.removeItem('access');
     localStorage.removeItem('refresh');
-    setIsAuthenticated(false);
-    setIsStaff(false);
     window.location.href = '/';
   };
 
-  // Safely decode token only if it exists
   const token = localStorage.getItem('access');
-  const user = token ? jwtDecode(token) : { user_id: null }; 
-  if(user) {
-	  console.log("Decoded JWT Payload:", user);
+  let user = { user_id: null, is_staff: false };
+  try {
+    if (token) user = jwtDecode(token);
+  } catch (err) {
+    console.error('Invalid token', err);
   }
 
   return (
     <div className="App">
-      <header>
-        <h1>Advanced Library Management System (ALMS)</h1>
-        {isAuthenticated && (
-          <button onClick={handleLogout}>Logout</button>
-        )}
+      <header className="navbar">
+        <div />
+        <div className="navbar-title">Advanced Library Management System (ALMS)</div>
+        <div className="navbar-actions">
+          {isAuthenticated && <button onClick={handleLogout}>Logout</button>}
+        </div>
       </header>
 
-      <main>
-        {!isAuthenticated ? (
-          <>
+      {!isAuthenticated ? (
+        <div className="login-page-wrapper">
+          <div className="login-card">
             <Login />
-            <hr />
-            <BookList />
-          </>
-        ) : (
-          <>
-            {user.user_id === "1" ? (
-              <>
-                <AdminDashboard />
-                <AdminCirculation />
-              </>
-            ) : (
-              <>
-                <MemberDashboard />
-                <hr />
-                <BookList />
-              </>
-            )}
-          </>
-        )}
-      </main>
+          </div>
+        </div>
+      ) : (
+        <div className="page-content">
+          {user.is_staff ? (
+            <AdminDashboard />
+          ) : (
+            <>
+              <MemberDashboard />
+              <BookList />
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }

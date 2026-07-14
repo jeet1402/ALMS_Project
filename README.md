@@ -69,12 +69,12 @@ python manage.py makemigrations library_app
 python manage.py migrate
 
 ```
-### Phase 5: excute setup_alms.sh
+### Phase 5: excute setup_project.sh bash script
 
 This script will setup backend and frontend 
 
-chmod +x setup_alms.sh
-./setup_alms.sh
+chmod +x setup_project.sh
+./setup_project.sh
 
 ### Phase 6: GitHub Initialization
 

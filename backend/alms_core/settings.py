@@ -139,7 +139,7 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    'TOKEN_OBTAIN_PAIR_SERIALIZER': 'library_app.serializers.MyTokenObtainPairSerializer',
+    'TOKEN_OBTAIN_SERIALIZER': 'library_app.serializers.MyTokenObtainPairSerializer',
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'ROTATE_REFRESH_TOKENS': True,
