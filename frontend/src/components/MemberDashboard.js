@@ -2,26 +2,33 @@ import React, { useEffect, useState } from 'react';
 import API from '../api';
 import FineDashboard from './FineDashboard';
 import DataTable from './DataTable';
+import { useDataRefresh } from '../DataRefreshContext';
+
+const POLL_MS = 15000;
 
 const MemberDashboard = () => {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { refreshKey, triggerRefresh } = useDataRefresh();
 
   const loadTransactions = () => {
-    setLoading(true);
     API.get('transactions/')
       .then((res) => setTransactions(res.data))
       .catch((err) => console.error("Error fetching transactions", err))
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { loadTransactions(); }, []);
+  useEffect(() => {
+    loadTransactions();
+    const interval = setInterval(loadTransactions, POLL_MS);
+    return () => clearInterval(interval);
+  }, [refreshKey]);
 
   const handlePayFines = async () => {
     try {
       await API.post('pay-fines/');
       alert("Fines cleared successfully!");
-      loadTransactions();
+      triggerRefresh();
     } catch (err) {
       alert("Failed to pay fines.");
     }
@@ -31,7 +38,7 @@ const MemberDashboard = () => {
     try {
       await API.put(`return/${transactionId}/`);
       alert("Book returned successfully!");
-      loadTransactions();
+      triggerRefresh(); // this is what makes BookList's availability update instantly
     } catch (err) {
       alert("Failed to return book.");
     }

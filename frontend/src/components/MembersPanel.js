@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import API from '../api';
 import DataTable from './DataTable';
+import { useDataRefresh } from '../DataRefreshContext';
+
+const POLL_MS = 15000;
 
 const MembersPanel = () => {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const { refreshKey, triggerRefresh } = useDataRefresh();
 
   const loadMembers = async () => {
-    setLoading(true);
     try {
       const res = await API.get('members/');
       setMembers(res.data);
@@ -20,32 +23,39 @@ const MembersPanel = () => {
     }
   };
 
-  useEffect(() => { loadMembers(); }, []);
+  useEffect(() => {
+    loadMembers();
+    const interval = setInterval(loadMembers, POLL_MS);
+    return () => clearInterval(interval);
+  }, [refreshKey]);
 
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this member?')) return;
     try {
       await API.delete(`members/${id}/`);
-      loadMembers();
+      triggerRefresh();
     } catch (err) {
       alert(err.response?.data?.detail || 'Failed to delete member.');
     }
   };
 
   const columns = [
-    { key: 'id', label: 'ID', width: '12%' },
-    { key: 'member_id', label: 'Member ID', width: '22%' },
-    { key: 'name', label: 'Name', width: '28%' },
-    { key: 'department', label: 'Department', width: '26%' },
+    { key: 'id', label: 'ID', width: '10%' },
+    { key: 'member_id', label: 'Member ID', width: '18%' },
+    { key: 'name', label: 'Name', width: '26%' },
+    { key: 'department', label: 'Department', width: '24%' },
     {
-      key: 'action', label: 'Action', width: '12%',
+      key: 'action', label: 'Action', width: '22%',
       render: (row) => <button onClick={() => handleDelete(row.id)}>Delete</button>,
     },
   ];
 
   return (
     <div className="window">
-      <h3>Manage Members</h3>
+      <div className="panel-header">
+        <h3>Manage Members</h3>
+        <button className="header-spacer-btn" aria-hidden="true" tabIndex={-1}>+ Add Book</button>
+      </div>
       {loading && <p>Loading members...</p>}
       {error && <p className="error-text">{error}</p>}
       {!loading && !error && (

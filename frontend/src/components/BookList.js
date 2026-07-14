@@ -1,16 +1,19 @@
 import React, { useEffect, useRef, useState } from 'react';
 import API from '../api';
 import DataTable from './DataTable';
+import { useDataRefresh } from '../DataRefreshContext';
 
 const DEBOUNCE_MS = 400;
+const POLL_MS = 15000;
 
 const BookList = () => {
   const [books, setBooks] = useState([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const debounceRef = useRef(null);
+  const { refreshKey, triggerRefresh } = useDataRefresh();
 
-  const loadBooks = async (query = '') => {
+  const loadBooks = async (query = search) => {
     setLoading(true);
     try {
       const res = await API.get('books/', { params: { search: query } });
@@ -24,8 +27,10 @@ const BookList = () => {
 
   useEffect(() => {
     loadBooks();
-    return () => clearTimeout(debounceRef.current);
-  }, []);
+    const interval = setInterval(() => loadBooks(), POLL_MS);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshKey]);
 
   const handleSearchChange = (value) => {
     setSearch(value);
@@ -37,7 +42,7 @@ const BookList = () => {
     try {
       const response = await API.post('reserve/', { book: bookId });
       alert(response.data.message);
-      loadBooks(search);
+      triggerRefresh(); // instantly updates MemberDashboard too, once it's built to react to it
     } catch (err) {
       alert(err.response?.data?.error || "Reservation failed.");
     }

@@ -36,7 +36,16 @@ body {
   font-weight: 700;
   letter-spacing: 0.3px;
 }
-.navbar-actions { grid-column: 3; text-align: right; }
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+}
+.navbar-greeting {
+  font-weight: 500;
+  font-size: 0.95rem;
+}
 .navbar-actions button {
   background: var(--white);
   color: var(--fb-blue);
@@ -98,11 +107,12 @@ button:disabled { background: #a9c4e8; cursor: not-allowed; }
 
 /* ---------- Admin grid: Books+Members row, Circulation full width ---------- */
 .admin-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  align-items: stretch; /* ensures both .window boxes match the tallest one in the row */
 }
 .admin-grid .full-width { grid-column: 1 / -1; }
+@media (max-width: 900px) {
+  .admin-grid { grid-template-columns: 1fr; }
+}
 
 @media (max-width: 900px) {
   .admin-grid { grid-template-columns: 1fr; }
@@ -119,7 +129,10 @@ button:disabled { background: #a9c4e8; cursor: not-allowed; }
 
 .panel-header { display: flex; justify-content: space-between; align-items: center; }
 .panel-header h3 { flex: 1; margin: 0; }
-
+.header-spacer-btn {
+  visibility: hidden;
+  pointer-events: none;
+}
 .add-form {
   display: flex;
   flex-direction: column;
@@ -142,6 +155,15 @@ button:disabled { background: #a9c4e8; cursor: not-allowed; }
   height: 36px;
   word-break: break-word;
   vertical-align: middle;
+}
+.data-table td button {
+  white-space: nowrap;
+  padding: 5px 10px;
+  font-size: 0.85rem;
+}
+.data-table th:last-child,
+.data-table td:last-child {
+  white-space: nowrap;
 }
 .data-table th {
   background: var(--fb-blue-light);

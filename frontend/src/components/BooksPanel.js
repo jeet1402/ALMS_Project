@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import API from '../api';
 import DataTable from './DataTable';
+import { useDataRefresh } from '../DataRefreshContext';
 
 const emptyForm = { title: '', author: '', isbn: '', total_copies: 1, available_copies: 1 };
+const POLL_MS = 15000;
 
 const BooksPanel = () => {
   const [books, setBooks] = useState([]);
@@ -11,9 +13,9 @@ const BooksPanel = () => {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const { refreshKey, triggerRefresh } = useDataRefresh();
 
   const loadBooks = async () => {
-    setLoading(true);
     try {
       const res = await API.get('books/');
       setBooks(res.data);
@@ -25,13 +27,17 @@ const BooksPanel = () => {
     }
   };
 
-  useEffect(() => { loadBooks(); }, []);
+  useEffect(() => {
+    loadBooks();
+    const interval = setInterval(loadBooks, POLL_MS);
+    return () => clearInterval(interval);
+  }, [refreshKey]);
 
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this book?')) return;
     try {
       await API.delete(`books/${id}/`);
-      loadBooks();
+      triggerRefresh();
     } catch (err) {
       alert(err.response?.data?.detail || 'Failed to delete book.');
     }
@@ -56,7 +62,7 @@ const BooksPanel = () => {
       });
       setForm(emptyForm);
       setShowForm(false);
-      loadBooks();
+      triggerRefresh();
     } catch (err) {
       alert(err.response?.data ? JSON.stringify(err.response.data) : 'Failed to add book.');
     } finally {
@@ -65,14 +71,14 @@ const BooksPanel = () => {
   };
 
   const columns = [
-    { key: 'id', label: 'ID', width: '8%' },
-    { key: 'title', label: 'Title', width: '24%' },
-    { key: 'author', label: 'Author', width: '18%' },
-    { key: 'isbn', label: 'ISBN', width: '16%' },
-    { key: 'total_copies', label: 'Total', width: '10%' },
-    { key: 'available_copies', label: 'Available', width: '10%' },
+    { key: 'id', label: 'ID', width: '5%' },
+    { key: 'title', label: 'Title', width: '23%' },
+    { key: 'author', label: 'Author', width: '17%' },
+    { key: 'isbn', label: 'ISBN', width: '15%' },
+    { key: 'total_copies', label: 'Total', width: '8%' },
+    { key: 'available_copies', label: 'Avail.', width: '10%' },
     {
-      key: 'action', label: 'Action', width: '14%',
+      key: 'action', label: 'Action', width: '22%',
       render: (row) => <button onClick={() => handleDelete(row.id)}>Delete</button>,
     },
   ];
@@ -88,31 +94,16 @@ const BooksPanel = () => {
 
       {showForm && (
         <form className="add-form" onSubmit={handleAddSubmit}>
-          <input
-            placeholder="Title" required
-            value={form.title}
-            onChange={(e) => setForm({ ...form, title: e.target.value })}
-          />
-          <input
-            placeholder="Author" required
-            value={form.author}
-            onChange={(e) => setForm({ ...form, author: e.target.value })}
-          />
-          <input
-            placeholder="ISBN (13 digits)" required maxLength={13}
-            value={form.isbn}
-            onChange={(e) => setForm({ ...form, isbn: e.target.value })}
-          />
-          <input
-            type="number" min="0" placeholder="Total Copies" required
-            value={form.total_copies}
-            onChange={(e) => setForm({ ...form, total_copies: e.target.value })}
-          />
-          <input
-            type="number" min="0" placeholder="Available Copies" required
-            value={form.available_copies}
-            onChange={(e) => setForm({ ...form, available_copies: e.target.value })}
-          />
+          <input placeholder="Title" required value={form.title}
+            onChange={(e) => setForm({ ...form, title: e.target.value })} />
+          <input placeholder="Author" required value={form.author}
+            onChange={(e) => setForm({ ...form, author: e.target.value })} />
+          <input placeholder="ISBN (13 digits)" required maxLength={13} value={form.isbn}
+            onChange={(e) => setForm({ ...form, isbn: e.target.value })} />
+          <input type="number" min="0" placeholder="Total Copies" required value={form.total_copies}
+            onChange={(e) => setForm({ ...form, total_copies: e.target.value })} />
+          <input type="number" min="0" placeholder="Available Copies" required value={form.available_copies}
+            onChange={(e) => setForm({ ...form, available_copies: e.target.value })} />
           <div className="add-form-actions">
             <button type="submit" disabled={saving}>{saving ? 'Saving...' : 'Save Book'}</button>
           </div>

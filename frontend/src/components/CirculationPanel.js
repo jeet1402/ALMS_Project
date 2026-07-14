@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import API from '../api';
 import DataTable from './DataTable';
+import { useDataRefresh } from '../DataRefreshContext';
+
+const POLL_MS = 15000;
 
 const CirculationPanel = () => {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { refreshKey, triggerRefresh } = useDataRefresh();
 
   const fetchTransactions = async () => {
-    setLoading(true);
     try {
       const res = await API.get('transactions/');
       setTransactions(res.data);
@@ -18,12 +21,16 @@ const CirculationPanel = () => {
     }
   };
 
-  useEffect(() => { fetchTransactions(); }, []);
+  useEffect(() => {
+    fetchTransactions();
+    const interval = setInterval(fetchTransactions, POLL_MS);
+    return () => clearInterval(interval);
+  }, [refreshKey]);
 
   const handleMarkReturned = async (transactionId) => {
     try {
       await API.put(`return/${transactionId}/`);
-      fetchTransactions();
+      triggerRefresh();
     } catch (err) {
       alert(err.response?.data?.error || 'Failed to mark as returned.');
     }
